@@ -43,18 +43,51 @@ TEST_CASE("get temperature breach according to the cooling type") {
   REQUIRE(alertHandlerTest.getTemperatureBreach(HI_ACTIVE_COOLING, 50) == TOO_HIGH);
 }
 
-// TEST_CASE("check and alert") {
-//   AlertHandler alertHandlerTest;
+TEST_CASE("check controller alert message strings") {
+  BreachType breachType = NORMAL;
+  controllerAlert controllerAlertNormal(breachType, 0xfeed);
+  REQUIRE(controllerAlertNormal.buildAlertMessageString() == "feed : 0\n");
+
+  breachType = TOO_LOW;
+  controllerAlert controllerAlertLow(breachType, 0xa01b);
+  REQUIRE(controllerAlertLow.buildAlertMessageString() == "a01b : 1\n");
+
+  breachType = TOO_HIGH;
+  controllerAlert controllerAlerthigh(breachType, 0xffff);
+  REQUIRE(controllerAlerthigh.buildAlertMessageString() == "ffff : 2\n");
+ }
+
+ TEST_CASE("check email alert message strings") {
+  BreachType breachType = TOO_LOW;
+  EmailAlert eMailAlertLow(breachType, "targetmail@domain.com");
+  REQUIRE(eMailAlertLow.buildAlertMessageString() == "To: targetmail@domain.com\nHi, the temperature is too low\n");
+
+  breachType = TOO_HIGH;
+  EmailAlert eMailAlertHigh(breachType, "targetmail@domain.com");
+  REQUIRE(eMailAlertHigh.buildAlertMessageString() == "To: targetmail@domain.com\nHi, the temperature is too high\n");
+
+  breachType = NORMAL;
+  EmailAlert eMailAlertNormal(breachType, "targetmail@domain.com");
+  REQUIRE(eMailAlertNormal.buildAlertMessageString() == "");
+ }
+
+ TEST_CASE("create the target object") {
+  AlertHandler alertHandlerTest;
+  AlertTarget alertTarget = TO_CONTROLLER;
+  BreachType breachType = TOO_LOW;
+  REQUIRE(alertHandlerTest.createAlertTarget(alertTarget, breachType) == true);
+
+  alertTarget = TO_EMAIL;
+  REQUIRE(alertHandlerTest.createAlertTarget(alertTarget, breachType) == true);
+
+  alertTarget = INVALID;
+  REQUIRE(alertHandlerTest.createAlertTarget(alertTarget, breachType) == false);
+ }
+
+//  TEST_CASE("check temperature level alert proccesing") {
+//   AlertTarget alertTarget = TO_CONTROLLER;
+//   char dummychar = {};
+//   BatteryCharacter BatteryCharacterTest = {PASSIVE_COOLING, dummychar};
 //   double tempInC = 30;
-//   BatteryCharacter BatteryCharacterTest{PASSIVE_COOLING, "GM"};
-
-//   checkAndAlert(TO_CONTROLLER,BatteryCharacterTest, tempInC);
-// }
-
-// TEST_CASE("check alert message strings") {
-//   BreachType breachType = NORMAL;
-//   controllerAlert controllerAlert(breachType, 0xfeed);
-
-//   REQUIRE(controllerAlert.buildAlertMessageString() == "0xfeed : NORNAL\n");
-
-// }
+//   REQUIRE(checkAndAlert(alertTarget, BatteryCharacterTest, tempInC) == true);
+//  }

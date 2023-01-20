@@ -4,6 +4,7 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <sstream>
 typedef enum {
   PASSIVE_COOLING,
   HI_ACTIVE_COOLING,
@@ -18,7 +19,8 @@ typedef enum {
 
 typedef enum {
   TO_CONTROLLER,
-  TO_EMAIL
+  TO_EMAIL, 
+  INVALID
 } AlertTarget;
 
 typedef struct {
@@ -34,8 +36,6 @@ static const temperatureLimitsMap tempLimitsMap{
   {MED_ACTIVE_COOLING, std::make_pair(0,40)},
   {HI_ACTIVE_COOLING,  std::make_pair(0,45)}
   };
-
-void checkAndAlert(AlertTarget alertTarget, BatteryCharacter batteryChar, double temperatureInC);
 
 class IFtargetAlert
 {
@@ -54,6 +54,7 @@ class EmailAlert: public IFtargetAlert
   EmailAlert(BreachType lbreachType, std::string eMailValue){
                 breachType= lbreachType;
                 eMail = eMailValue;}
+  ~EmailAlert();
   std::string  buildAlertMessageString();
 };
 
@@ -64,17 +65,22 @@ class controllerAlert: public IFtargetAlert
                   breachType= lbreachType; 
                   header = headerValue;}
   std::string  buildAlertMessageString();
+  ~controllerAlert();
 };
 
 class AlertHandler
 {
   public:
-  AlertHandler() = default;
-  IFtargetAlert* targetAlert; 
+  AlertHandler();
+  IFtargetAlert* targetAlert = nullptr;
   void setTargetAlert(IFtargetAlert* ifTargetAlert){targetAlert = ifTargetAlert;}
 
   BreachType inferBreach(double value, double lowerLimit, double upperLimit);
   temperatureLimitsPair getTemperatureLimits(CoolingType coolingType);
   BreachType getTemperatureBreach(CoolingType coolingType, double temperatureInC);
-  void sendAlertToTarget(std::string alertMessage);
+  bool sendAlertToTarget(std::string alertMessage);
+  bool createAlertTarget(AlertTarget alertTarget, BreachType breachType);
+  ~AlertHandler();
 };
+
+bool checkAndAlert(AlertTarget alertTarget, BatteryCharacter batteryChar, double temperatureInC);
